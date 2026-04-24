@@ -11,7 +11,8 @@ const port = 3005;
 app.use(cors());
 app.use(express.json());
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const dbUrl = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_Enf6RJIPe3vk@ep-cold-hat-ao73v0in-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require';
+const pool = new Pool({ connectionString: dbUrl });
 pool.on('error', (err) => console.error('Idle client error', err));
 
 // ─── Init Tables ───────────────────────────────────────────────────────────────

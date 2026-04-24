@@ -1,0 +1,108 @@
+import React from 'react';
+
+const W = 600, H = 180, PAD = { top: 16, right: 16, bottom: 32, left: 52 };
+
+const fmt = (v) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M` : v >= 1_000 ? `${(v / 1_000).toFixed(0)}K` : v;
+
+function smooth(pts) {
+  if (!pts.length) return '';
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 1; i < pts.length; i++) {
+    const p0 = pts[i - 1], p1 = pts[i];
+    const cpx = p0.x + (p1.x - p0.x) * 0.5;
+    d += ` C ${cpx} ${p0.y}, ${cpx} ${p1.y}, ${p1.x} ${p1.y}`;
+  }
+  return d;
+}
+
+const RevenueLineChart = ({ data = [] }) => {
+  if (!data.length) return null;
+
+  const chartW = W - PAD.left - PAD.right;
+  const chartH = H - PAD.top - PAD.bottom;
+
+  const maxVal = Math.max(...data.map(d => Math.max(d.target, d.actual)), 1);
+  const yMax = Math.ceil(maxVal / 1_000_000) * 1_000_000 || 1_000_000;
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map(f => yMax * f);
+
+  const toX = (i) => PAD.left + (i / (data.length - 1)) * chartW;
+  const toY = (v) => PAD.top + chartH - (v / yMax) * chartH;
+
+  const targetPts = data.map((d, i) => ({ x: toX(i), y: toY(d.target) }));
+  const actualPts = data.filter(d => d.actual > 0).map((d, i) => {
+    const idx = data.indexOf(d);
+    return { x: toX(idx), y: toY(d.actual) };
+  });
+
+  const areaPath = actualPts.length > 1
+    ? `${smooth(actualPts)} L ${actualPts[actualPts.length-1].x} ${PAD.top + chartH} L ${actualPts[0].x} ${PAD.top + chartH} Z`
+    : '';
+
+  return (
+    <div style={{ width: '100%', overflowX: 'auto' }}>
+      <svg viewBox={`0 0 ${W} ${H + 8}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#00f2fe" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#00f2fe" stopOpacity="0.01" />
+          </linearGradient>
+        </defs>
+
+        {/* Y Grid lines & labels */}
+        {yTicks.map((tick, i) => {
+          const y = toY(tick);
+          return (
+            <g key={i}>
+              <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y}
+                stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+              <text x={PAD.left - 6} y={y + 4} textAnchor="end"
+                fill="#94a3b8" fontSize="10">{fmt(tick)}</text>
+            </g>
+          );
+        })}
+
+        {/* Area fill for actual */}
+        {areaPath && <path d={areaPath} fill="url(#areaGrad)" />}
+
+        {/* Target line (dashed) */}
+        {data.length > 1 && (
+          <path d={smooth(targetPts)} fill="none"
+            stroke="#4facfe" strokeWidth="1.5" strokeDasharray="5 4" opacity="0.6" />
+        )}
+
+        {/* Actual line */}
+        {actualPts.length > 1 && (
+          <path d={smooth(actualPts)} fill="none"
+            stroke="#00f2fe" strokeWidth="2.5"
+            style={{ filter: 'drop-shadow(0 0 4px rgba(0,242,254,0.6))' }} />
+        )}
+
+        {/* Dots for actual */}
+        {actualPts.map((p, i) => (
+          <circle key={i} cx={p.x} cy={p.y} r="4"
+            fill="#00f2fe" stroke="#141b2d" strokeWidth="2" />
+        ))}
+
+        {/* X labels */}
+        {data.map((d, i) => (
+          <text key={i} x={toX(i)} y={H + 4} textAnchor="middle"
+            fill="#94a3b8" fontSize="10">{d.month}</text>
+        ))}
+      </svg>
+
+      {/* Legend */}
+      <div style={{ display:'flex', gap:'1.5rem', justifyContent:'flex-end', marginTop:'4px' }}>
+        <span style={{ display:'flex', alignItems:'center', gap:'6px', fontSize:'12px', color:'#94a3b8' }}>
+          <svg width="24" height="4"><line x1="0" y1="2" x2="24" y2="2" stroke="#00f2fe" strokeWidth="2.5" /></svg>
+          Realisasi
+        </span>
+        <span style={{ display:'flex', alignItems:'center', gap:'6px', fontSize:'12px', color:'#94a3b8' }}>
+          <svg width="24" height="4"><line x1="0" y1="2" x2="24" y2="2" stroke="#4facfe" strokeWidth="1.5" strokeDasharray="4 3" /></svg>
+          Target
+        </span>
+      </div>
+    </div>
+  );
+};
+
+export default RevenueLineChart;

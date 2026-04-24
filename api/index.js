@@ -242,6 +242,17 @@ app.get('/api/stations', async (req, res) => {
   } catch (err) { console.error(err.message); res.status(500).send('Server Error'); }
 });
 
+app.put('/api/stations/:id', async (req, res) => {
+  try {
+    const { name } = req.body;
+    const r = await pool.query(
+      'UPDATE stations SET name=$1 WHERE id=$2 RETURNING *',
+      [name, req.params.id]
+    );
+    res.json(r.rows[0]);
+  } catch (err) { console.error(err.message); res.status(500).send('Server Error'); }
+});
+
 // ─── LOTS ─────────────────────────────────────────────────────────────────────
 app.get('/api/lots', async (req, res) => {
   try {

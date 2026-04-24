@@ -194,6 +194,7 @@ const Tenants = () => {
   const [selectedTenant, setSelectedTenant] = useState(null);
   const [showAdd, setShowAdd]             = useState(false);
   const [editTenant, setEditTenant]       = useState(null);
+  const [editStationName, setEditStationName] = useState(null);
   const [filterStation, setFilterStation] = useState('');
   const [filterCat, setFilterCat]         = useState('');
   const [searchQ, setSearchQ]             = useState('');
@@ -223,6 +224,20 @@ const Tenants = () => {
     return matchStation && matchCat && matchSearch;
   });
 
+  const handleRenameStation = async (e) => {
+    e.preventDefault();
+    if (!editStationName.trim()) return;
+    try {
+      await fetch(`${API}/api/stations/${stationId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: editStationName })
+      });
+      setStationName(editStationName);
+      setEditStationName(null);
+      fetchTenants();
+      window.location.reload(); // Refresh to update sidebar
+    } catch (e) { console.error(e); }
+  };
+
   if (selectedTenant) {
     return (
       <TenantDetail
@@ -238,8 +253,13 @@ const Tenants = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="card-title text-xl">
+          <h2 className="card-title text-xl flex items-center gap-sm">
             {stationName ? `Tenant — ${stationName}` : 'Tenant Management'}
+            {stationId && (
+              <button onClick={() => setEditStationName(stationName)} className="btn-icon text-muted hover-text-main" title="Edit Nama Stasiun">
+                <Edit3 size={16} />
+              </button>
+            )}
           </h2>
           <p className="text-muted small">
             {stationName
@@ -338,6 +358,26 @@ const Tenants = () => {
           onSaved={fetchTenants}
           onDeleted={fetchTenants}
         />
+      )}
+      {editStationName !== null && (
+        <div style={{ position:'fixed', inset:0, zIndex:1000, background:'rgba(0,0,0,0.65)', display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}>
+          <div className="card glass form-card" style={{ width:'100%', maxWidth:'400px' }}>
+            <h3 className="card-title mb-md">Ubah Nama Stasiun</h3>
+            <form onSubmit={handleRenameStation}>
+              <input
+                required autoFocus
+                className="w-full mb-md"
+                style={{ background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:'10px', padding:'10px 14px', color:'white', outline:'none' }}
+                value={editStationName}
+                onChange={e => setEditStationName(e.target.value)}
+              />
+              <div className="flex justify-end gap-sm">
+                <button type="button" onClick={() => setEditStationName(null)} className="btn btn-ghost">Batal</button>
+                <button type="submit" className="btn btn-primary">Simpan</button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

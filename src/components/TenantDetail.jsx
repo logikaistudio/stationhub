@@ -130,7 +130,7 @@ const UtilCard = ({ icon, label, color, rows }) => (
 );
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-const TenantDetail = ({ tenant, onBack }) => {
+const TenantDetail = ({ tenant, onBack, onEdit }) => {
   const [activeTab, setActiveTab] = useState('kontrak');
   const [tickets, setTickets]     = useState([]);
   const [selTicket, setSelTicket] = useState(null);
@@ -183,11 +183,8 @@ const TenantDetail = ({ tenant, onBack }) => {
           </div>
         </div>
         <div className="flex items-center gap-sm">
-          <button className="btn btn-ghost flex items-center gap-xs" style={{ padding:'8px 18px', fontSize:'14px' }}>
-            <Edit3 size={15}/> Edit
-          </button>
-          <button className="btn btn-danger flex items-center gap-xs" style={{ padding:'8px 18px', fontSize:'14px' }}>
-            <Trash2 size={15}/> Delete
+          <button onClick={() => onEdit?.(tenant)} className="btn btn-ghost flex items-center gap-xs" style={{ padding:'8px 18px', fontSize:'14px' }}>
+            <Edit3 size={15}/> Edit / Hapus
           </button>
         </div>
       </div>

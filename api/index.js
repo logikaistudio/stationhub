@@ -253,6 +253,28 @@ app.put('/api/stations/:id', async (req, res) => {
   } catch (err) { console.error(err.message); res.status(500).send('Server Error'); }
 });
 
+app.post('/api/stations', async (req, res) => {
+  try {
+    const { name, location, total_area_m2 } = req.body;
+    const r = await pool.query(
+      'INSERT INTO stations (name, location, total_area_m2) VALUES ($1, $2, $3) RETURNING *',
+      [name, location || 'Indonesia', total_area_m2 || 0]
+    );
+    res.json(r.rows[0]);
+  } catch (err) { console.error(err.message); res.status(500).send('Server Error'); }
+});
+
+app.delete('/api/stations/:id', async (req, res) => {
+  try {
+    // Attempt to delete station; will fail if ON DELETE RESTRICT prevents it
+    await pool.query('DELETE FROM stations WHERE id=$1', [req.params.id]);
+    res.json({ message: 'Station deleted' });
+  } catch (err) {
+    console.error(err.message);
+    res.status(400).json({ error: 'Cannot delete station with active contracts/lots.' });
+  }
+});
+
 // ─── LOTS ─────────────────────────────────────────────────────────────────────
 app.get('/api/lots', async (req, res) => {
   try {
